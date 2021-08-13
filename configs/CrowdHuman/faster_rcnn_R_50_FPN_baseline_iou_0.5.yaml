@@ -53,5 +53,5 @@ TEST:
   EVAL_START: 12000
   DETECTIONS_PER_IMAGE: 200
 SEED: 11301414
-OUTPUT_DIR: "./data/workspace/Experiments/detectron2/Crowdhuman/faster_rcnn_R_50_FPN_baseline_iou0.5"
+OUTPUT_DIR: "./data/model/crowdhuman/faster_rcnn_R_50_FPN_baseline_iou0.5"
 # 44.6
