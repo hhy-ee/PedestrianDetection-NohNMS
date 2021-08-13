@@ -17,7 +17,7 @@ You may want to write your own script with your datasets and other customization
 
 import logging
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from collections import OrderedDict
 import torch
 
@@ -153,7 +153,7 @@ def main(args):
 
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
-    args.config_file = 'configs/CrowdHuman/faster_rcnn_R_50_FPN_baseline_iou_0.5.yaml'
+    # args.config_file = 'configs/CrowdHuman/faster_rcnn_R_50_FPN_baseline_iou_0.5.yaml'
     print("Command Line Args:", args)
     launch(
         main,
