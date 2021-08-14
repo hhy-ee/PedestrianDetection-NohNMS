@@ -24,8 +24,8 @@ DATASETS:
   TRAIN: ("crowdhuman_train",)
   TEST: ("crowdhuman_val",)
 SOLVER:
-  IMS_PER_BATCH: 8
-  BASE_LR: 0.02
+  IMS_PER_BATCH: 4
+  BASE_LR: 0.01
   STEPS: (18750, 24375)
   MAX_ITER: 28125
   CHECKPOINT_PERIOD: 4000
