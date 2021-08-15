@@ -7,8 +7,7 @@ MODEL:
   RESNETS:
     DEPTH: 50
   ANCHOR_GENERATOR:
-    SIZES: !!python/object/apply:eval ["[[x] for x in [32, 64, 128, 256, 512 ]]"]
-    ASPECT_RATIOS: [[1.0]]
+    ASPECT_RATIOS: [[1.0, 2.0, 3.0]]
   PROPOSAL_GENERATOR:
     MIN_SIZE: 2
   ALLOW_BOX_OUT_OF_BOUNDARY: True
@@ -37,5 +36,5 @@ TEST:
   EVAL_START: 12000
   DETECTIONS_PER_IMAGE: 200
 SEED: 11301415
-OUTPUT_DIR: "./data/model/crowdhuman/retinanet_R_50_FPN_baseline_iou0.5"
+OUTPUT_DIR: "./data/model/crowdhuman/retinanet_R_50_FPN_baseline_anchor9_iou0.5"
 # 
