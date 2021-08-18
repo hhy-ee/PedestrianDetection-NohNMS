@@ -227,7 +227,7 @@ class RandomCrop(TransformGen):
                 height and width
         """
         super().__init__()
-        assert crop_type in ["relative_range", "relative", "absolute"]
+        assert crop_type in ["relative_range", "relative", "absolute", "absolute_range"]
         self._init(locals())
 
     def get_transform(self, img):
@@ -256,6 +256,11 @@ class RandomCrop(TransformGen):
             return int(h * ch + 0.5), int(w * cw + 0.5)
         elif self.crop_type == "absolute":
             return self.crop_size
+        elif self.crop_type == "absolute_range":
+            assert self.crop_size[0] <= self.crop_size[1]
+            ch = np.random.randint(min(h, self.crop_size[0]), min(h, self.crop_size[1]) + 1)
+            cw = np.random.randint(min(w, self.crop_size[0]), min(w, self.crop_size[1]) + 1)
+            return ch, cw
         else:
             NotImplementedError("Unknown crop type {}".format(self.crop_type))
 

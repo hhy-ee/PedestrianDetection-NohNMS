@@ -37,7 +37,17 @@ from detectron2.evaluation import (
     CrowdHumanEvaluator,
 )
 from detectron2.modeling import GeneralizedRCNNWithTTA
+from detectron2.data import (
+    build_detection_test_loader,
+    build_detection_train_loader,
+    DatasetCatalog,
+    MetadataCatalog)
 
+from dqrf import add_dqrf_config, add_dataset_path
+from dqrf.utils.dataset_mapper import DqrfDatasetMapper, CH_DqrfDatasetMapper
+from dqrf.utils.get_crowdhuman_dicts import get_crowdhuman_dicts
+
+logger = logging.getLogger("detectron2")
 
 class Trainer(DefaultTrainer):
     """
@@ -47,6 +57,67 @@ class Trainer(DefaultTrainer):
     "SimpleTrainer", or write your own training loop. You can use
     "tools/plain_train_net.py" as an example.
     """
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.clip_norm_val = 0.0
+        super().__init__(cfg)
+
+    @classmethod
+    def build_optimizer(cls, cfg, model):
+        n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        logger.info(f"Number of parameters {n_parameters}")
+
+        def is_backbone(n, backbone_names):
+            out = False
+            for b in backbone_names:
+                if b in n:
+                    out = True
+                    break
+            return out
+
+        #careful DEFORMABLE DETR yields poorer performance is its FAKE FPN is trained on the same LR as Resnet
+        #Resnet parameters name is backbone.0
+        lr_backbone_names = ['backbone.0']
+
+        param_dicts = [
+            {
+                "params": [p for n, p in model.named_parameters() if
+                           not is_backbone(n, lr_backbone_names) and
+                           not (
+                                       "roi_fc1" in n or "roi_fc2" in n or "offset" in n or "sampling_locs" in n or "sampling_cens" in n or "sampling_weight" in n or "conv_offset" in n or 'learnable_fc' in n) and p.requires_grad],
+                "lr": cfg.SOLVER.BASE_LR,
+            },
+            {
+                "params": [p for n, p in model.named_parameters() if is_backbone(n, lr_backbone_names) and
+                           not (
+                                       "roi_fc1" in n or "roi_fc2" in n or "offset" in n or "sampling_locs" in n or "sampling_cens" in n or "sampling_weight" in n or "conv_offset" in n or 'learnable_fc' in n) and p.requires_grad],
+                "lr": cfg.SOLVER.BASE_LR * cfg.SOLVER.BACKBONE_MULTIPLIER,
+            },
+            {
+                "params": [p for n, p in model.named_parameters() if
+                           ("sampling_locs" in n) and p.requires_grad],
+                "lr": cfg.SOLVER.BASE_LR * cfg.SOLVER.SAMPLE_MULTIPLIER,
+            },
+            {
+                "params": [p for n, p in model.named_parameters() if
+                           ("sampling_cens" in n) and p.requires_grad],
+                "lr": cfg.SOLVER.BASE_LR * cfg.SOLVER.CENTER_MULTPLIER,
+            },
+            {
+                "params": [p for n, p in model.named_parameters() if
+                           ("sampling_weight" in n) and p.requires_grad],
+                "lr": cfg.SOLVER.BASE_LR * cfg.SOLVER.WEIGHT_MULTIPLIER,
+            },
+
+        ]
+        optimizer = torch.optim.AdamW(param_dicts, lr=cfg.SOLVER.BASE_LR,
+                                      weight_decay=cfg.SOLVER.WEIGHT_DECAY)
+        return optimizer
+
+    @classmethod
+    def build_train_loader(cls, cfg):
+        mapper = CH_DqrfDatasetMapper(cfg, True)
+        return build_detection_train_loader(cfg, mapper=mapper)
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_folder=None):
@@ -116,8 +187,21 @@ def setup(args):
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
+    add_dqrf_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
+
+    # crowdhuman dataset for detr
+    add_dataset_path(cfg)
+    ch_train = get_crowdhuman_dicts(cfg.CH_PATH.ANNOT_PATH_TRAIN, cfg.CH_PATH.IMG_PATH_TRAIN)
+    ch_val = get_crowdhuman_dicts(cfg.CH_PATH.ANNOT_PATH_VAL, cfg.CH_PATH.IMG_PATH_VAL)
+    DatasetCatalog.register(cfg.DATASETS.TRAIN[0], ch_train)
+    MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(thing_classes=["background", "person"])
+    DatasetCatalog.register(cfg.DATASETS.TEST[0], ch_val)
+    MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(thing_classes=["background", "person"])
+    MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(json_file=cfg.CH_PATH.ANNOT_PATH_VAL)
+    MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(gt_dir=cfg.CH_PATH.IMG_PATH_VAL)
+
     cfg.freeze()
     default_setup(cfg, args)
     return cfg

@@ -90,7 +90,6 @@ def register_crowdhuman_instances(name, metadata, anno_file, image_dir, val_json
     """
     # 1. register a function which returns dicts
     DatasetCatalog.register(name, lambda: load_crowdhuman(anno_file, image_dir))
-
     if not isinstance(val_json_files, list):
         val_json_files = [val_json_files]
 

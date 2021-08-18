@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: DenseQuerySelfAttention
+Version: 1.0
+Summary: Pytorch Wrapper for Functions of Dense Query
+Home-page: https://github.com/Hatmm/PED-DETR-for-Pedestrian-Detection
+Author: Matthieu Lin
+Author-email: UNKNOWN
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN

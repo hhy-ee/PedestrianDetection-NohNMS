@@ -1,0 +1,57 @@
+MODEL:
+  META_ARCHITECTURE: "DQRF_DETR"
+  WEIGHTS: "./detectron2/ImageNetPretrained/MSRA/R-50.pkl"
+  BACKBONE:
+    FREEZE_AT: 2 # FREEZE STEM + block 1
+    NAME: "build_resnet_backbone"
+  MASK_ON: False
+  RESNETS:
+    DEPTH: 50
+    STRIDE_IN_1X1: False
+    NORM: "FrozenBN"
+    OUT_FEATURES: ["res3", "res4", "res5"]
+  DQRF_DETR:
+    AUX_LOSS: False
+    NUM_CLASSES: 1
+    NUM_QUERIES: 300
+    DENSE_QUERY: False
+    RECTIFIED_ATTENTION: True
+INPUT:
+  MIN_SIZE_TRAIN: (480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800)
+  MAX_SIZE_TRAIN: 1333
+  MIN_SIZE_TEST: 800
+  MAX_SIZE_TEST: 1333
+  CROP:
+    ENABLED: True
+    TYPE: "absolute_range"
+    SIZE: (384, 600)
+  FORMAT: "RGB"
+DATALOADER:
+  ASPECT_RATIO_GROUPING: True
+  FILTER_EMPTY_ANNOTATIONS: False
+  NUM_WORKERS: 4
+DATASETS:
+  TRAIN: ("crowdhuman_train_detr",)
+  TEST: ("crowdhuman_val_detr",)
+SOLVER:
+  IMS_PER_BATCH: 2
+  BASE_LR: 0.00004
+  STEPS: (197120,) # 118287 // 24 * 40
+  GAMMA: 0.1
+  MAX_ITER: 246400
+  WARMUP_FACTOR: 1.0
+  WARMUP_ITERS: 0
+  WEIGHT_DECAY: 0.0001
+  OPTIMIZER: "ADAMW"
+  BACKBONE_MULTIPLIER: 0.1
+  SAMPLE_MULTIPLIER: 0.1
+  CENTER_MULTPLIER: 0.1
+  WEIGHT_MULTIPLIER: 1.0
+
+TEST:
+  EVAL_PERIOD: 4928
+
+SEED: 11301415
+OUTPUT_DIR: "./data/model/crowdhuman/dqrf_detr_baseline"
+
+VERSION: 2
