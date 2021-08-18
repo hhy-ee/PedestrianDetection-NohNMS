@@ -120,6 +120,11 @@ class Trainer(DefaultTrainer):
         return build_detection_train_loader(cfg, mapper=mapper)
 
     @classmethod
+    def build_test_loader(cls, cfg, dataset_name):
+        # mapper = CH_DqrfDatasetMapper(cfg, False)
+        return build_detection_test_loader(cfg, dataset_name)
+
+    @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_folder=None):
         """
         Create evaluator(s) for a given dataset.
@@ -194,13 +199,15 @@ def setup(args):
     # crowdhuman dataset for detr
     add_dataset_path(cfg)
     ch_train = get_crowdhuman_dicts(cfg.CH_PATH.ANNOT_PATH_TRAIN, cfg.CH_PATH.IMG_PATH_TRAIN)
-    ch_val = get_crowdhuman_dicts(cfg.CH_PATH.ANNOT_PATH_VAL, cfg.CH_PATH.IMG_PATH_VAL)
     DatasetCatalog.register(cfg.DATASETS.TRAIN[0], ch_train)
     MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(thing_classes=["background", "person"])
-    DatasetCatalog.register(cfg.DATASETS.TEST[0], ch_val)
-    MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(thing_classes=["background", "person"])
-    MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(json_file=cfg.CH_PATH.ANNOT_PATH_VAL)
-    MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(gt_dir=cfg.CH_PATH.IMG_PATH_VAL)
+
+    # ch_val = get_crowdhuman_dicts(cfg.CH_PATH.ANNOT_PATH_VAL, cfg.CH_PATH.IMG_PATH_VAL)
+    # DatasetCatalog.register(cfg.DATASETS.TEST[0], ch_val)
+    # MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(thing_classes=["background", "person"])
+    # MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(evaluator_type='crowdhuman')
+    # MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(json_file=cfg.CH_PATH.ANNOT_PATH_VAL)
+    # MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(gt_dir=cfg.CH_PATH.IMG_PATH_VAL)
 
     cfg.freeze()
     default_setup(cfg, args)

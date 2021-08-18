@@ -156,7 +156,7 @@ if __name__ == "__main__":
     args.dist_url = 'tcp://127.0.0.1:50152'
     # args.config_file = 'configs/CrowdHuman/faster_rcnn_R_50_FPN_baseline_anchor_9_iou_0.5.yaml'
     # args.config_file = 'configs/CrowdHuman/dqrf_detr_baseline.yaml'
-    # args.config_file = 'configs/CrowdHuman/retinanet_R_50_FPN_baseline_iou_0.5.yaml'
+    # args.config_file = 'configs/CrowdHuman/faster_rcnn_R_50_FPN_baseline_iou_0.5.yaml'
 
     print("Command Line Args:", args)
     launch(

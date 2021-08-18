@@ -16,6 +16,8 @@ from torch import nn
 from .build import META_ARCH_REGISTRY
 
 from detectron2.structures import Boxes, ImageList, Instances
+from ..postprocessing import detector_postprocess
+
 from dqrf.backbone import build_deformable_detr_backbone
 from dqrf.transformer import build_transformer
 from dqrf.utils.utils import MLP, _get_clones, NestedTensor
@@ -121,25 +123,21 @@ class DQRF_DETR(nn.Module):
 
         else:
             box_cls = output["pred_logits"]
-            box_pred = output["pred_boxes"]
-            orig_image_sizes = torch.stack([torch.as_tensor([b.get("height"), b.get("width")]) for b in batched_inputs], dim=0).to(self.device)
-            results = self.inference(box_cls, box_pred, orig_image_sizes)
-            return results
-            # processed_results = []
-            # for results_per_image, input_per_image, image_size in zip(results, batched_inputs, images.image_sizes):
-            #     height = input_per_image.get("height", image_size[0]) # if "heigh does not exist take img size"
-            #     width = input_per_image.get("width", image_size[1])
-            #     r = self.post_processor(results_per_image, height, width)
-            #     r = detector_postprocess(results_per_image, height, width) # this will clip predictions
-                # processed_results.append({"instances": r})
-            # return processed_results
+            box_preds = output["pred_boxes"]
+            orig_image_sizes = [(b.get("height"), b.get("width")) for b in batched_inputs]
+            results = self.inference(box_cls, box_preds, orig_image_sizes)
 
-    def inference(self, box_cls, box_pred, image_sizes):
+            processed_results = []
+            for result, _ in zip(results, orig_image_sizes):
+                processed_results.append({"instances": result})
+            return processed_results
+
+    def inference(self, box_cls, box_preds, image_sizes):
         inference_dict = {
             1: self.inference_coco,
             0: self.inference_ch,
         }
-        return inference_dict[self.is_coco_type_data](box_cls, box_pred, image_sizes)
+        return inference_dict[self.is_coco_type_data](box_cls, box_preds, image_sizes)
     # def post_processor(self, results_per_image, height, width):
     #     post_processor_dict = {
     #         1: detector_postprocess,
@@ -182,7 +180,7 @@ class DQRF_DETR(nn.Module):
             # results.append(result)
         return results
 
-    def inference_ch(self, box_cls, box_pred, image_sizes):
+    def inference_ch(self, box_cls, box_preds, image_sizes):
         """
         Arguments:
             box_cls (Tensor): tensor of shape (batch_size, num_queries, K).
@@ -199,22 +197,20 @@ class DQRF_DETR(nn.Module):
 
         # For each box we assign the best class or the second best if the best on is `no_object`.
         prob = box_cls.sigmoid()
-        scores = prob#.squeeze(-1) # [bs, num_query, 1]
-        labels = torch.ones_like(scores, dtype=torch.int64, device=scores.device)#.squeeze(-1) # [bs, num_query, 1]
-        box_pred = box_cxcywh_to_xyxy(box_pred)
-        img_h, img_w = image_sizes.unbind(1)
-        scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
-        box_pred = box_pred * scale_fct[:, None, :]
+        scores = prob.squeeze(-1)
+        labels = torch.zeros_like(scores, dtype=torch.int64, device=scores.device)
+        box_preds = box_cxcywh_to_xyxy(box_preds)
+        for i, (score, label, box_pred, image_size) in enumerate(zip(scores, labels, box_preds, image_sizes)):
+            h, w = image_size[0], image_size[1]
+            scale_fct = torch.tensor([[w, h, w, h]]).type_as(box_pred)
+            box_pred = box_pred * scale_fct
 
-        for i, (scores_per_image, labels_per_image, box_pred_per_image, image_size) in enumerate(zip(scores, labels, box_pred, image_sizes)):
             result = Instances(image_size)
-            result.pred_boxes = box_pred_per_image
-            # result.pred_boxes = Boxes(box_pred_per_image)
-            # result.pred_boxes.scale(scale_x=image_size[1], scale_y=image_size[0])
-            result.scores = scores_per_image
-            result.pred_classes = labels_per_image
-            results.append({"instances": result})
-            # results.append(result)
+            result.pred_boxes = Boxes(box_pred)
+            result.scores = score
+            result.pred_classes = label
+
+        results.append(result)
         return results
 
     def prepare_targets(self, targets):
