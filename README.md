@@ -1,14 +1,15 @@
 # Pedestrain Detection baseline
 
-The Pytoch implementation for the Pedestrian detection baseline..
+The Pytoch implementation for the Pedestrian detection baseline.
 
 * This repo is implemented based on [detectron2](https://github.com/facebookresearch/detectron2).
 
 ## Performance
 |    Model    | Backbone |  AP  |  Recall |  MR  | Weights |
 |-------------|----------|------|---------|------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Faster RCNN | ResNet-50| 85.0 |   87.5  | 45.2 |         |
-|  Retinanet  | ResNet-50|      |         |      |         |
+| Faster RCNN(anchor=1) | ResNet-50| 85.50 |   88.39  | 44.82 |         |
+| Faster RCNN(anchor=3) | ResNet-50| 86.01 |   89.32  | 44.27 |         |
+|  Retinanet(anchor=9)  | ResNet-50|       |      |      |         |
 
 ## Preparation
 Download the CrowdHuman Datasets from http://www.crowdhuman.org/, and then move them under the directory like:
@@ -33,7 +34,7 @@ Download the pretrained model, and then move them under the directory like:
   conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 cudatoolkit=10.1 -c pytorch
   cd root_dir
   pip install -e . 
-  cd dqrf
+  cd dqrf/ops
   pip install -e .
   pip install pycocotools, scipy, opencv-python, pandas
 ```
