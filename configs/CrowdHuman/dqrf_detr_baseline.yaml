@@ -1,8 +1,8 @@
 MODEL:
   META_ARCHITECTURE: "DQRF_DETR"
   WEIGHTS: "./detectron2/ImageNetPretrained/MSRA/R-50.pkl"
-  PIXEL_MEAN: [123.675, 116.280, 103.530]
-  PIXEL_STD: [58.395, 57.120, 57.375]
+  PIXEL_MEAN: [103.53, 116.28, 123.675]
+  PIXEL_STD: [1.0, 1.0, 1.0]
   BACKBONE:
     FREEZE_AT: 2 # FREEZE STEM + block 1
     NAME: "build_resnet_backbone"
