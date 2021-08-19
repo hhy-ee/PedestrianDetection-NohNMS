@@ -1,9 +1,5 @@
 # Pedestrain Detection baseline
 
-<div align="center">
-  <img src="demo/architecture.png"/>
-</div>
-
 The Pytoch implementation for the Pedestrian detection baseline..
 
 * This repo is implemented based on [detectron2](https://github.com/facebookresearch/detectron2).
