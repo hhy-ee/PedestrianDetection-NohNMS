@@ -17,7 +17,7 @@ You may want to write your own script with your datasets and other customization
 
 import logging
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from collections import OrderedDict
 import torch
 
@@ -37,15 +37,8 @@ from detectron2.evaluation import (
     CrowdHumanEvaluator,
 )
 from detectron2.modeling import GeneralizedRCNNWithTTA
-from detectron2.data import (
-    build_detection_test_loader,
-    build_detection_train_loader,
-    DatasetCatalog,
-    MetadataCatalog)
 
 from dqrf import add_dqrf_config, add_dataset_path
-from dqrf.utils.dataset_mapper import DqrfDatasetMapper, CH_DqrfDatasetMapper
-from dqrf.utils.get_crowdhuman_dicts import get_crowdhuman_dicts
 
 logger = logging.getLogger("detectron2")
 
@@ -113,16 +106,6 @@ class Trainer(DefaultTrainer):
         optimizer = torch.optim.AdamW(param_dicts, lr=cfg.SOLVER.BASE_LR,
                                       weight_decay=cfg.SOLVER.WEIGHT_DECAY)
         return optimizer
-
-    @classmethod
-    def build_train_loader(cls, cfg):
-        mapper = CH_DqrfDatasetMapper(cfg, True)
-        return build_detection_train_loader(cfg, mapper=mapper)
-
-    @classmethod
-    def build_test_loader(cls, cfg, dataset_name):
-        # mapper = CH_DqrfDatasetMapper(cfg, False)
-        return build_detection_test_loader(cfg, dataset_name)
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_folder=None):
@@ -198,16 +181,6 @@ def setup(args):
 
     # crowdhuman dataset for detr
     add_dataset_path(cfg)
-    ch_train = get_crowdhuman_dicts(cfg.CH_PATH.ANNOT_PATH_TRAIN, cfg.CH_PATH.IMG_PATH_TRAIN)
-    DatasetCatalog.register(cfg.DATASETS.TRAIN[0], ch_train)
-    MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(thing_classes=["background", "person"])
-
-    # ch_val = get_crowdhuman_dicts(cfg.CH_PATH.ANNOT_PATH_VAL, cfg.CH_PATH.IMG_PATH_VAL)
-    # DatasetCatalog.register(cfg.DATASETS.TEST[0], ch_val)
-    # MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(thing_classes=["background", "person"])
-    # MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(evaluator_type='crowdhuman')
-    # MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(json_file=cfg.CH_PATH.ANNOT_PATH_VAL)
-    # MetadataCatalog.get(cfg.DATASETS.TEST[0]).set(gt_dir=cfg.CH_PATH.IMG_PATH_VAL)
 
     cfg.freeze()
     default_setup(cfg, args)
@@ -247,7 +220,7 @@ if __name__ == "__main__":
     args.dist_url = 'tcp://127.0.0.1:50152'
     # args.num_gpus = 2
     # args.config_file = 'configs/CrowdHuman/faster_rcnn_R_50_FPN_baseline_anchor_9_iou_0.5.yaml'
-    # args.config_file = 'configs/CrowdHuman/dqrf_detr_baseline.yaml'
+    args.config_file = 'configs/CrowdHuman/dqrf_detr_baseline.yaml'
     # args.config_file = 'configs/CrowdHuman/retinanet_R_50_FPN_baseline_iou_0.5.yaml'
 
     print("Command Line Args:", args)

@@ -8,8 +8,8 @@ The Pytoch implementation for the Pedestrian detection baseline.
 |    Model    | Backbone |  AP  |  Recall |  MR  | Weights |
 |-------------|----------|------|---------|------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Faster RCNN(anchor=1) | ResNet-50| 85.50 |   88.39  | 44.82 |         |
-| Faster RCNN(anchor=3) | ResNet-50| 86.01 |   89.32  | 44.27 |         |
-|  Retinanet(anchor=9)  | ResNet-50|       |      |      |         |
+| Faster RCNN(anchor=3) | ResNet-50| 85.47 |   88.20  | 44.29 |         |
+|  Retinanet(anchor=9)  | ResNet-50| 76.59 |   83.06  | 62.76 |         |
 
 ## Preparation
 Download the CrowdHuman Datasets from http://www.crowdhuman.org/, and then move them under the directory like:

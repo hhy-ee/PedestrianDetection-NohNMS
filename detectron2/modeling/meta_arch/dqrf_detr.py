@@ -116,8 +116,7 @@ class DQRF_DETR(nn.Module):
                 gt_instances = [x["instances"].to(self.device) for x in batched_inputs]
                 targets = self.prepare_targets(gt_instances)
             else:
-                targets = [x["instances"] for x in batched_inputs]
-                targets = [{k: v.to(self.device) if type(v) == torch.Tensor else v for k, v in t.items()} for t in targets]
+                targets = self.detr_mapper(batched_inputs)
             loss_dict = self.criterion(output, targets)
             return loss_dict
 
@@ -244,6 +243,23 @@ class DQRF_DETR(nn.Module):
         images = ImageList.from_tensors(images)
 
         return images
+    
+    def detr_mapper(self, batched_inputs):
+        output_targets = []
+        targets = [x["instances"] for x in batched_inputs]
+        image_sizes = [x["image"].shape[1:] for x in batched_inputs]
+        for bs, (target, image_size) in enumerate(zip(targets, image_sizes)):
+            output_target = {}
+            h, w = image_size[0], image_size[1]
+            normalizer = torch.tensor([w, h, w, h], dtype=torch.float32).to(self.device)
+            boxes = box_xyxy_to_cxcywh(target.get('gt_boxes').tensor.to(self.device))
+            label = target.get('gt_classes').to(self.device)
+            output_target['boxes'] = boxes[torch.where(label == 0)[0], :] / normalizer
+            output_target['iboxes'] = boxes[torch.where(label == -1)[0], :] / normalizer
+            output_target['labels'] = label.new_full((len(torch.where(label == 0)[0]),), 1)
+            output_target['size'] = torch.tensor([h, w], dtype=torch.int64).to(self.device)
+            output_targets.append(output_target)
+        return output_targets
 
     def to_nested(self, images):
         #ok
