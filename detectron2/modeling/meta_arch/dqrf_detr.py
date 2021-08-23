@@ -196,14 +196,16 @@ class DQRF_DETR(nn.Module):
 
         # For each box we assign the best class or the second best if the best on is `no_object`.
         prob = box_cls.sigmoid()
-        scores = prob.squeeze(-1)
-        labels = torch.zeros_like(scores, dtype=torch.int64, device=scores.device)
+        scores = prob.topk(k=100, dim=1).values#.squeeze(-1) # [bs, num_query, 1]
+        indices = prob.topk(k=100, dim=1).indices
+        labels = torch.zeros_like(scores, dtype=torch.int64, device=scores.device)#.squeeze(-1) # [bs, num_query, 1]
         box_preds = box_cxcywh_to_xyxy(box_preds)
-        for i, (score, label, box_pred, image_size) in enumerate(zip(scores, labels, box_preds, image_sizes)):
+
+        for i, (score, label, box_pred, indice, image_size) in enumerate(zip(scores, labels, box_preds, indices, image_sizes)):
             h, w = image_size[0], image_size[1]
             scale_fct = torch.tensor([[w, h, w, h]]).type_as(box_pred)
             box_pred = box_pred * scale_fct
-
+            box_pred = box_pred[indice[:, 0], :]
             result = Instances(image_size)
             result.pred_boxes = Boxes(box_pred)
             result.scores = score
