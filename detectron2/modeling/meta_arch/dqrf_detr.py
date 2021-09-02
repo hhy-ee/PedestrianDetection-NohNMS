@@ -208,8 +208,8 @@ class DQRF_DETR(nn.Module):
             box_pred = box_pred[indice[:, 0], :]
             result = Instances(image_size)
             result.pred_boxes = Boxes(box_pred)
-            result.scores = score
-            result.pred_classes = label
+            result.scores = score[:, 0]
+            result.pred_classes = label[:, 0]
 
         results.append(result)
         return results
